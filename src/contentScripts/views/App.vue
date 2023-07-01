@@ -267,9 +267,11 @@ function videoController() {
 </script>
 
 <template>
-  <div class="fixed right-0 bottom-0 m-20px z-100 flex items-end font-sans select-none leading-1em text-16px">
+  <div
+    v-if="videos.length"
+    class="fixed right-0 bottom-0 m-20px z-100 flex items-end font-sans select-none leading-1em text-16px"
+  >
     <div
-      v-if="videos.length"
       ref="videosRef"
       class="bg-white text-gray-800 rounded-lg shadow w-max h-min"
       p="x-16px y-8px"
