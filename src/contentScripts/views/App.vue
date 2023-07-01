@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { useToggle } from '@vueuse/core'
+import { onClickOutside, useToggle } from '@vueuse/core'
 import { storage } from 'webextension-polyfill'
 import 'uno.css'
 
 const [show, toggle] = useToggle(false)
+const videos = ref<HTMLVideoElement[]>([])
+const selectedIndex = ref<number>(0)
+
+const videosRef = ref(null)
+onClickOutside(videosRef, () => {
+  if (show.value)
+    show.value = false
+})
 
 videoController()
 
@@ -36,8 +44,8 @@ function videoController() {
   const RATE_STEP = 0.2
   const MIN_RATE = 0.1
 
-  let video: HTMLVideoElement | null = null
   let toast: Toast | undefined
+  let video: HTMLVideoElement
 
   let enable = false
 
@@ -56,28 +64,37 @@ function videoController() {
       enable = value.enable.newValue
     })
 
-    document.addEventListener(
+    setTimeout(() => {
+      videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
+    })
+
+    window.addEventListener(
       'keydown',
       async (event) => {
+        if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
+          return
+
         console.log('enable', enable)
         // if (!enable)
         //   return
 
-        if (!video) {
-          video = document.querySelector('video')
-          if (!video || video.src)
-            return
-        }
-        console.log('video', video)
-
-        if (['input', 'textarea'].includes((event.target as Element)?.tagName.toLowerCase()))
+        // 控制插件功能的开关
+        videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
+        if (!videos.value?.length) {
+          console.log('Could not find any videos.')
           return
+        }
 
+        console.log('video', videos.value)
+        if (selectedIndex.value >= videos.value.length)
+          selectedIndex.value = videos.value.length - 1
+
+        video = videos.value[selectedIndex.value]
         const features = [mapVolume, mapTime, mapSpeed, mapPause]
         const ret = features.find(func => !!func(event.key, video!))
 
         if (ret) {
-        // 避免和网站原本的快捷键功能冲突，优先使用我们自定义的
+          // 避免和网站原本的快捷键功能冲突，优先使用我们自定义的
           event.stopImmediatePropagation()
           event.preventDefault()
         }
@@ -265,16 +282,17 @@ function videoController() {
 <template>
   <div class="fixed right-0 bottom-0 m-5 z-100 flex items-end font-sans select-none leading-1em">
     <div
+      v-if="videos.length"
+      ref="videosRef"
       class="bg-white text-gray-800 rounded-lg shadow w-max h-min"
       p="x-4 y-2"
       m="y-auto r-2"
       transition="opacity duration-300"
       :class="show ? 'opacity-100' : 'opacity-0'"
     >
-      <h1 class="text-lg">
-        Vitesse WebExt
-      </h1>
-      <SharedSubtitle />
+      <div v-for="index in videos.length" :key="index">
+        <label class="flex items-center"><input v-model="selectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
+      </div>
     </div>
     <button
       class="flex w-10 h-10 rounded-full shadow cursor-pointer border-none"
