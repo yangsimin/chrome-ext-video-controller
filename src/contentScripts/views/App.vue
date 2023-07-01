@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onClickOutside, useToggle } from '@vueuse/core'
-import { storage } from 'webextension-polyfill'
 import 'uno.css'
 
 const [show, toggle] = useToggle(false)
@@ -47,24 +46,18 @@ function videoController() {
   let toast: Toast | undefined
   let video: HTMLVideoElement
 
-  let enable = false
-
   window.addEventListener('load', () => {
-    console.log('loaded')
     mapKey()
     toast = new Toast()
   })
 
   // 映射按键
   function mapKey() {
-    storage.local
-      .get('enable')
-      .then(({ enable: value }) => (enable = value))
-    storage.local.onChanged.addListener((value) => {
-      enable = value.enable.newValue
+    setTimeout(() => {
+      videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
     })
 
-    setTimeout(() => {
+    window.addEventListener('hashchange', () => {
       videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
     })
 
@@ -74,18 +67,13 @@ function videoController() {
         if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
           return
 
-        console.log('enable', enable)
-        // if (!enable)
-        //   return
-
         // 控制插件功能的开关
-        videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
         if (!videos.value?.length) {
-          console.log('Could not find any videos.')
+          console.warn('Could not find any videos.')
           return
         }
 
-        console.log('video', videos.value)
+        console.warn('video', videos.value)
         if (selectedIndex.value >= videos.value.length)
           selectedIndex.value = videos.value.length - 1
 
@@ -189,7 +177,6 @@ function videoController() {
     if (!exceptKeys.includes(keyName))
       return
 
-    console.log('paused?', video.paused, video)
     switch (keyName) {
       case ' ':
         if (video.paused)
