@@ -1,18 +1,22 @@
 ### Speed Control
-`Z`: speed reset to 1
+`z`: speed reset to 1
 
-`X`: speed down 0.2
+`x`: speed down 0.2
 
-`C`: speed up 0.2
+`c`: speed up 0.2
 
 ### Volume Control
-`J`: volume down 10%
+`j`: volume down 10%
 
-`K`: volume up 10%
+`k`: volume up 10%
 
 ### Progress Control
-`H`: go back 2 seconds
+`h`: go back 2 seconds
 
-`L`: go ahead 2 seconds 
+`l`: go ahead 2 seconds 
 
-`Space`:  play / pause
+`H`: go back 5 seconds
+
+`L`: go ahead 5 seconds 
+
+`space`:  play / pause
