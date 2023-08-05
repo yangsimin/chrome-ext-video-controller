@@ -1,21 +1,25 @@
 <script setup lang="ts">
-import { onClickOutside, useStyleTag, useToggle } from '@vueuse/core'
+import { useStyleTag, useToggle } from '@vueuse/core'
 import 'uno.css'
 
 const TAG = 'video-controller'
-const [show, toggle] = useToggle(false)
+const [show] = useToggle(false)
 const videos = ref<HTMLVideoElement[]>([])
 const selectedIndex = ref<number>(0)
 
 const videosRef = ref(null)
-onClickOutside(videosRef, () => {
-  if (show.value)
-    show.value = false
-})
 
 const { load, unload } = useStyleTag(`
-.video-controller-highlight {
-  border: 2px solid red !important;
+.video-controller-highlight::before {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border: 6px solid red;
+  z-index: 10;
 }
 `)
 onMounted(load)
@@ -306,16 +310,16 @@ function videoController() {
   }
 }
 
-function handleMouseEnter(index: number) {
+function selectVideo(index: number) {
   const video = videos.value[index]
   logInfo('mouseEnter', videos.value, index, video)
-  video.classList.add('video-controller-highlight')
+  video && video.parentElement?.classList.add('video-controller-highlight')
 }
 
-function handleMouseLeave(index: number) {
+function unselectVideo(index: number) {
   const video = videos.value[index]
   logInfo('mouseLeave', videos.value, index, video)
-  video.classList.remove('video-controller-highlight')
+  video && video.parentElement?.classList.remove('video-controller-highlight')
 }
 
 function logInfo(message: any, ...optionalParams: any[]) {
@@ -328,23 +332,27 @@ function logInfo(message: any, ...optionalParams: any[]) {
   <div
     v-if="videos.length"
     class="fixed right-0 bottom-0 m-20px z-100 flex items-end font-sans select-none leading-1em text-16px"
+    @mouseenter="show = true"
+    @mouseleave="show = false"
   >
-    <div
+    <ul
       ref="videosRef"
-      class="bg-white text-gray-800 rounded-lg shadow w-max h-min"
+      class="list-none m-0 p-0 bg-white text-gray-800 rounded-lg shadow w-max h-min"
       p="x-16px y-8px"
       m="y-auto r-8px"
       transition="opacity duration-300"
-      :class="show ? 'opacity-100' : 'opacity-0'"
+      :class="show ? '' : 'hidden'"
     >
-      <div v-for="index in videos.length" :key="index" @mouseenter="handleMouseEnter(index - 1)" @mouseleave="handleMouseLeave(index - 1)">
-        <label class="flex items-center cursor-pointer"><input v-model="selectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
-      </div>
-    </div>
+      <li
+        v-for="index in videos.length"
+        :key="index" @mouseenter="selectVideo(index - 1)" @mouseleave="unselectVideo(index - 1)"
+      >
+        <label class="flex items-center cursor-pointer py-4px"><input v-model="selectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
+      </li>
+    </ul>
     <button
       class="flex w-40px h-40px rounded-full shadow cursor-pointer border-none"
       bg="teal-600 hover:teal-700"
-      @click="toggle()"
     >
       <pixelarticons-power class="block m-auto text-white text-18px leading-28px" />
     </button>
