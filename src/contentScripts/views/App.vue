@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onClickOutside, useToggle } from '@vueuse/core'
+import { onClickOutside, useStyleTag, useToggle } from '@vueuse/core'
 import 'uno.css'
 
+const TAG = 'video-controller'
 const [show, toggle] = useToggle(false)
 const videos = ref<HTMLVideoElement[]>([])
 const selectedIndex = ref<number>(0)
@@ -11,6 +12,14 @@ onClickOutside(videosRef, () => {
   if (show.value)
     show.value = false
 })
+
+const { load, unload } = useStyleTag(`
+.video-controller-highlight {
+  border: 2px solid red !important;
+}
+`)
+onMounted(load)
+onUnmounted(unload)
 
 videoController()
 
@@ -53,12 +62,43 @@ function videoController() {
 
   // 映射按键
   function mapKey() {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes) {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeName === 'VIDEO') {
+              setTimeout(() => {
+                videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
+                logInfo(videos.value)
+              }, 1000)
+            }
+          })
+        }
+        if (mutation.removedNodes) {
+          mutation.removedNodes.forEach((node) => {
+            if (node.nodeName === 'VIDEO') {
+              setTimeout(() => {
+                videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
+                logInfo(videos.value)
+              })
+            }
+          })
+        }
+      })
+    })
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+    })
+
     setTimeout(() => {
       videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
+      logInfo(videos.value)
     })
 
     window.addEventListener('hashchange', () => {
       videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
+      logInfo(videos.value)
     })
 
     window.addEventListener(
@@ -67,13 +107,14 @@ function videoController() {
         if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
           return
 
-        // 控制插件功能的开关
-        if (!videos.value?.length) {
-          console.warn('Could not find any videos.')
+        // 与其他功能键一起按下时，跳过
+        if (event.metaKey)
           return
-        }
 
-        console.warn('video', videos.value)
+        // 控制插件功能的开关
+        if (!videos.value?.length)
+          return
+
         if (selectedIndex.value >= videos.value.length)
           selectedIndex.value = videos.value.length - 1
 
@@ -264,6 +305,23 @@ function videoController() {
     }
   }
 }
+
+function handleMouseEnter(index: number) {
+  const video = videos.value[index]
+  logInfo('mouseEnter', videos.value, index, video)
+  video.classList.add('video-controller-highlight')
+}
+
+function handleMouseLeave(index: number) {
+  const video = videos.value[index]
+  logInfo('mouseLeave', videos.value, index, video)
+  video.classList.remove('video-controller-highlight')
+}
+
+function logInfo(message: any, ...optionalParams: any[]) {
+  // eslint-disable-next-line no-console
+  console.log(`[${TAG}]`, message, ...optionalParams)
+}
 </script>
 
 <template>
@@ -279,8 +337,8 @@ function videoController() {
       transition="opacity duration-300"
       :class="show ? 'opacity-100' : 'opacity-0'"
     >
-      <div v-for="index in videos.length" :key="index">
-        <label class="flex items-center"><input v-model="selectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
+      <div v-for="index in videos.length" :key="index" @mouseenter="handleMouseEnter(index - 1)" @mouseleave="handleMouseLeave(index - 1)">
+        <label class="flex items-center cursor-pointer"><input v-model="selectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
       </div>
     </div>
     <button
