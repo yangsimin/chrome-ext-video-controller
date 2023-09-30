@@ -249,7 +249,7 @@ function videoController() {
       this.divEl = document.createElement('div')
       // 2. 初始化样式
       const style = {
-        position: 'absolute',
+        position: 'fixed',
         left: 0,
         top: 0,
         fontSize: TOAST_TEXT_SIZE,
