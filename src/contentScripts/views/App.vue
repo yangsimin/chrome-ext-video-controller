@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { UseStyleTagReturn } from '@vueuse/core'
 import { useStyleTag, useToggle } from '@vueuse/core'
 import 'uno.css'
 
@@ -8,22 +9,6 @@ const videos = ref<HTMLVideoElement[]>([])
 const selectedIndex = ref<number>(0)
 
 const videosRef = ref(null)
-
-const { load, unload } = useStyleTag(`
-.video-controller-highlight::before {
-  content: "";
-  display: block;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  border: 6px solid red;
-  z-index: 10;
-}
-`)
-onMounted(load)
-onUnmounted(unload)
 
 videoController()
 
@@ -310,16 +295,46 @@ function videoController() {
   }
 }
 
+const videoHeight = ref(0)
+const videoWidth = ref(0)
+let styleTag: UseStyleTagReturn | undefined
+const highlightClass = computed(() => `
+  .video-controller-highlight::before {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    border: 6px solid red;
+    z-index: 10;
+    box-sizing: border-box;
+    width: ${videoWidth.value}px;
+    height: ${videoHeight.value}px;
+  }
+`)
+
 function selectVideo(index: number) {
   const video = videos.value[index]
   logInfo('mouseEnter', videos.value, index, video)
   video && video.parentElement?.classList.add('video-controller-highlight')
+  videoHeight.value = video.offsetHeight
+  videoWidth.value = video.offsetWidth
+  styleTag = useStyleTag(highlightClass, {
+    id: 'video-controller-style',
+    immediate: true,
+  })
 }
 
 function unselectVideo(index: number) {
   const video = videos.value[index]
   logInfo('mouseLeave', videos.value, index, video)
   video && video.parentElement?.classList.remove('video-controller-highlight')
+  if (styleTag) {
+    styleTag.unload()
+    styleTag = undefined
+  }
 }
 
 function logInfo(message: any, ...optionalParams: any[]) {
