@@ -123,7 +123,7 @@ function videoController() {
           selectedIndex.value = videos.value.length - 1
 
         video = videos.value[selectedIndex.value]
-        const features = [mapVolume, mapTime, mapSpeed, mapPause]
+        const features = [mapVolume, mapTime, mapSpeed, mapPause, mapScreen]
         const ret = features.find(func => !!func(event.key, video!))
 
         if (ret) {
@@ -193,7 +193,6 @@ function videoController() {
   }
 
   // 控制音量
-  const lastVolume = -1
   function mapVolume(keyName: string, video: HTMLVideoElement) {
     const exceptKeys = ['j', 'k', 'm']
     if (!exceptKeys.includes(keyName))
@@ -231,6 +230,26 @@ function videoController() {
           video.pause()
 
         toast?.show(`${video.paused ? '暂停' : '播放'}`)
+        break
+    }
+    return true
+  }
+
+  function mapScreen(keyName: string, video: HTMLVideoElement) {
+    const exceptKeys = ['f']
+    if (!exceptKeys.includes(keyName))
+      return
+
+    switch (keyName) {
+      case 'f':
+        if (document.fullscreenElement) {
+          document.exitFullscreen()
+          toast?.show('退出全屏')
+        }
+        else {
+          video.requestFullscreen()
+          toast?.show('全屏')
+        }
         break
     }
     return true
