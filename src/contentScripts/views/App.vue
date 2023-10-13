@@ -97,7 +97,7 @@ function videoController() {
           return
 
         // 与其他功能键一起按下时，跳过
-        if (event.metaKey)
+        if (event.metaKey || event.altKey || event.ctrlKey)
           return
 
         // 控制插件功能的开关
