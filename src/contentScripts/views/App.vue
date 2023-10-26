@@ -90,6 +90,26 @@ function videoController() {
       logInfo(videos.value)
     })
 
+    window.addEventListener('keyup', (event) => {
+      if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
+        return
+      if (event.metaKey || event.altKey || event.ctrlKey)
+        return
+      if (!videos.value?.length)
+        return
+      if (selectedIndex.value >= videos.value.length)
+        selectedIndex.value = videos.value.length - 1
+
+      video = videos.value[selectedIndex.value]
+      const exceptKeys = [' ']
+      if (exceptKeys.includes(event.key)) {
+        event.stopImmediatePropagation()
+        event.preventDefault()
+      }
+    }, {
+      capture: true,
+    })
+
     window.addEventListener(
       'keydown',
       async (event) => {
