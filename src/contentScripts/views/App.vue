@@ -281,7 +281,7 @@ function videoController() {
         color: TOAST_TEXT_COLOR,
         padding: '20px',
         margin: '20px',
-        zIndex: '999999999',
+        zIndex: '99999999999999999',
         backgroundColor: TOAST_BACKGROUND,
         borderRadius: '99999px',
       }
@@ -301,7 +301,7 @@ function videoController() {
     _setVisible(visible: boolean) {
       if (!visible) {
         const duration = 1000
-        if (document.body.contains(this.divEl)) {
+        if (document.documentElement.contains(this.divEl)) {
           this.divEl.style.transition = `${duration}ms`
           this.divEl.style.opacity = '0'
           this.transitionTimer = setTimeout(() => {
@@ -312,14 +312,14 @@ function videoController() {
       else {
       // 重置样式
         this._resetOpacity()
-        if (document.body.contains(this.divEl)) {
+        if (document.documentElement.contains(this.divEl)) {
         // 如果是要显示toast，而且toast已经在dom中
         // 重置计时器
           clearTimeout(this.timer)
           clearTimeout(this.transitionTimer)
           return
         }
-        document.body.append(this.divEl)
+        document.documentElement.append(this.divEl)
       }
     }
 
