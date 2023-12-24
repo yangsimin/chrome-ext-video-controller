@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import type { UseStyleTagReturn } from '@vueuse/core'
-import { useStyleTag, useToggle } from '@vueuse/core'
+import { useStyleTag } from '@vueuse/core'
 import 'uno.css'
 import { Toast } from '../toast'
 import { mapPause, mapScreen, mapSpeed, mapTime, mapVolume } from '../plugins'
 
 const TAG = 'video-controller'
-const [show] = useToggle(false)
-const videos = ref<HTMLVideoElement[]>([])
-const selectedIndex = ref<number>(0)
+const floatBtnDisplayed = ref(false)
+const videoElements = ref<HTMLVideoElement[]>([])
+const videoSelectedIndex = ref(0)
 
-const videosRef = ref(null)
+const videoListRef = ref(null)
 
 videoController()
 
@@ -35,30 +35,45 @@ function videoController() {
     toast = new Toast()
   })
 
+  function getAllValidVideoElements() {
+    return Array.from(document.querySelectorAll('video') ?? []).filter(video => video.src)
+  }
+
+  function shouldMapKey(event: KeyboardEvent) {
+    if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
+      return false
+
+    if (event.metaKey || event.altKey || event.ctrlKey)
+      return false
+
+    if (!videoElements.value?.length)
+      return false
+
+    return true
+  }
+
   // 映射按键
   function mapKey() {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.addedNodes) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeName === 'VIDEO') {
-              setTimeout(() => {
-                videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
-                logInfo(videos.value)
-              }, 1000)
-            }
+        mutation.addedNodes?.forEach((node) => {
+          if (node.nodeName !== 'VIDEO')
+            return
+
+          setTimeout(() => {
+            videoElements.value = getAllValidVideoElements()
+            logInfo(videoElements.value)
+          }, 1000)
+        })
+        mutation.removedNodes?.forEach((node) => {
+          if (node.nodeName !== 'VIDEO')
+            return
+
+          setTimeout(() => {
+            videoElements.value = getAllValidVideoElements()
+            logInfo(videoElements.value)
           })
-        }
-        if (mutation.removedNodes) {
-          mutation.removedNodes.forEach((node) => {
-            if (node.nodeName === 'VIDEO') {
-              setTimeout(() => {
-                videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
-                logInfo(videos.value)
-              })
-            }
-          })
-        }
+        })
       })
     })
     observer.observe(document.body, {
@@ -67,26 +82,23 @@ function videoController() {
     })
 
     setTimeout(() => {
-      videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
-      logInfo(videos.value)
+      videoElements.value = getAllValidVideoElements()
+      logInfo(videoElements.value)
     })
 
     window.addEventListener('hashchange', () => {
-      videos.value = Array.from(document.querySelectorAll('video') ?? []).filter(video => !!video.src)
-      logInfo(videos.value)
+      videoElements.value = getAllValidVideoElements()
+      logInfo(videoElements.value)
     })
 
     window.addEventListener('keyup', (event) => {
-      if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
+      if (!shouldMapKey(event))
         return
-      if (event.metaKey || event.altKey || event.ctrlKey)
-        return
-      if (!videos.value?.length)
-        return
-      if (selectedIndex.value >= videos.value.length)
-        selectedIndex.value = videos.value.length - 1
 
-      video = videos.value[selectedIndex.value]
+      if (videoSelectedIndex.value >= videoElements.value.length)
+        videoSelectedIndex.value = videoElements.value.length - 1
+
+      video = videoElements.value[videoSelectedIndex.value]
       // 按下空格, 特殊处理
       const exceptKeys = [' ']
       if (exceptKeys.includes(event.key)) {
@@ -100,21 +112,13 @@ function videoController() {
     window.addEventListener(
       'keydown',
       async (event) => {
-        if (['input', 'textarea'].includes((event.target as Element)?.tagName?.toLowerCase()))
+        if (!shouldMapKey(event))
           return
 
-        // 与其他功能键一起按下时，跳过
-        if (event.metaKey || event.altKey || event.ctrlKey)
-          return
+        if (videoSelectedIndex.value >= videoElements.value.length)
+          videoSelectedIndex.value = videoElements.value.length - 1
 
-        // 控制插件功能的开关
-        if (!videos.value?.length)
-          return
-
-        if (selectedIndex.value >= videos.value.length)
-          selectedIndex.value = videos.value.length - 1
-
-        video = videos.value[selectedIndex.value]
+        video = videoElements.value[videoSelectedIndex.value]
         const features = [mapVolume, mapTime, mapSpeed, mapPause, mapScreen]
         const ret = features.find(func => !!func(event.key, video!, toast!))
 
@@ -154,8 +158,8 @@ const highlightClass = computed(() => `
 `)
 
 function selectVideo(index: number) {
-  const video = videos.value[index]
-  logInfo('mouseEnter', videos.value, index, video)
+  const video = videoElements.value[index]
+  logInfo('mouseEnter', videoElements.value, index, video)
   video && video.parentElement?.classList.add('video-controller-highlight')
   videoHeight.value = video.offsetHeight
   videoWidth.value = video.offsetWidth
@@ -166,8 +170,8 @@ function selectVideo(index: number) {
 }
 
 function unselectVideo(index: number) {
-  const video = videos.value[index]
-  logInfo('mouseLeave', videos.value, index, video)
+  const video = videoElements.value[index]
+  logInfo('mouseLeave', videoElements.value, index, video)
   video && video.parentElement?.classList.remove('video-controller-highlight')
   if (styleTag) {
     styleTag.unload()
@@ -183,24 +187,24 @@ function logInfo(message: any, ...optionalParams: any[]) {
 
 <template>
   <div
-    v-if="videos.length"
+    v-if="videoElements.length"
     class="fixed right-0 bottom-0 m-20px z-100 flex items-end font-sans select-none leading-1em text-16px"
-    @mouseenter="show = true"
-    @mouseleave="show = false"
+    @mouseenter="floatBtnDisplayed = true"
+    @mouseleave="floatBtnDisplayed = false"
   >
     <ul
-      ref="videosRef"
+      ref="videoListRef"
       class="list-none m-0 p-0 bg-white text-gray-800 rounded-lg shadow w-max h-min"
       p="x-16px y-8px"
       m="y-auto r-8px"
       transition="opacity duration-300"
-      :class="show ? '' : 'hidden'"
+      :class="floatBtnDisplayed ? '' : 'hidden'"
     >
       <li
-        v-for="index in videos.length"
+        v-for="index in videoElements.length"
         :key="index" @mouseenter="selectVideo(index - 1)" @mouseleave="unselectVideo(index - 1)"
       >
-        <label class="flex items-center cursor-pointer py-4px"><input v-model="selectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
+        <label class="flex items-center cursor-pointer py-4px"><input v-model="videoSelectedIndex" type="radio" :value="index - 1">Video {{ index }}</label>
       </li>
     </ul>
     <button
