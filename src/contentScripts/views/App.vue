@@ -28,7 +28,7 @@ const TAG = 'video-controller'
 let toast: Toast
 let observer: MutationObserver
 
-const floatBtnDisplayed = ref(false)
+const videoListDisplayed = ref(false)
 const videoElements = ref<HTMLVideoElement[]>([])
 const videoSelectedIndex = ref(0)
 const videoListRef = ref(null)
@@ -154,6 +154,7 @@ const highlightClass = computed(
     box-sizing: border-box;
     width: ${videoWidth.value}px;
     height: ${videoHeight.value}px;
+    margin: 0 auto;
   }
 `,
 )
@@ -190,16 +191,16 @@ function logInfo(message: any, ...optionalParams: any[]) {
   <div
     v-if="videoElements.length"
     class="fixed right-0 bottom-0 m-20px z-100 flex items-end font-sans select-none leading-1em text-16px"
-    @mouseenter="floatBtnDisplayed = true"
-    @mouseleave="floatBtnDisplayed = false"
+    @mouseenter="videoListDisplayed = true"
+    @mouseleave="videoListDisplayed = false"
   >
     <ul
       ref="videoListRef"
       class="list-none m-0 p-0 bg-white text-gray-800 rounded-lg shadow w-max h-min"
-      p="x-16px y-8px"
+      p="x-16px y-12px"
       m="y-auto r-8px"
       transition="opacity duration-300"
-      :class="floatBtnDisplayed ? '' : 'hidden'"
+      :class="videoListDisplayed ? '' : 'hidden'"
     >
       <li
         v-for="index in videoElements.length"
@@ -207,11 +208,15 @@ function logInfo(message: any, ...optionalParams: any[]) {
         @mouseenter="selectVideo(index - 1)"
         @mouseleave="unselectVideo(index - 1)"
       >
-        <label class="flex items-center cursor-pointer py-4px"><input
-          v-model="videoSelectedIndex"
-          type="radio"
-          :value="index - 1"
-        >Video {{ index }}</label>
+        <label class="flex items-center cursor-pointer py-4px">
+          <input
+            v-model="videoSelectedIndex"
+            class="ml-0"
+            type="radio"
+            :value="index - 1"
+          >
+          Video {{ index }}
+        </label>
       </li>
     </ul>
     <button
