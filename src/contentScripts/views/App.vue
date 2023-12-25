@@ -15,14 +15,13 @@ import { useStyleTag } from '@vueuse/core'
 import 'uno.css'
 import { Toast } from '../toast'
 import { mapPause, mapScreen, mapSpeed, mapTime, mapVolume } from '../plugins'
-import type { Plugin } from '../types'
 
 const TAG = 'video-controller'
 const floatBtnDisplayed = ref(false)
 const videoElements = ref<HTMLVideoElement[]>([])
 const videoSelectedIndex = ref(0)
+
 const videoListRef = ref(null)
-const plugins: Plugin[]
 
 let toast: Toast | undefined
 let video: HTMLVideoElement
@@ -45,8 +44,9 @@ function init() {
 
   window.addEventListener(
     'keyup',
-    event => {
-      if (!shouldMapKey(event)) return
+    (event) => {
+      if (!shouldMapKey(event))
+        return
 
       // 按下空格, 特殊处理
       const exceptKeys = [' ']
@@ -62,8 +62,9 @@ function init() {
 
   window.addEventListener(
     'keydown',
-    async event => {
-      if (!shouldMapKey(event)) return
+    async (event) => {
+      if (!shouldMapKey(event))
+        return
 
       const features = [mapVolume, mapTime, mapSpeed, mapPause, mapScreen]
       const ret = features.find(func => !!func(event.key, video!, toast!))
@@ -83,14 +84,16 @@ function init() {
 }
 
 function observeVideoUpdate(onVideoUpdate: () => void) {
-  const observer = new MutationObserver(mutations => {
-    mutations.forEach(mutation => {
-      mutation.addedNodes?.forEach(node => {
-        if (node.nodeName !== 'VIDEO') return
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes?.forEach((node) => {
+        if (node.nodeName !== 'VIDEO')
+          return
         setTimeout(onVideoUpdate, 1000)
       })
-      mutation.removedNodes?.forEach(node => {
-        if (node.nodeName !== 'VIDEO') return
+      mutation.removedNodes?.forEach((node) => {
+        if (node.nodeName !== 'VIDEO')
+          return
         setTimeout(onVideoUpdate)
       })
     })
@@ -120,9 +123,11 @@ function shouldMapKey(event: KeyboardEvent) {
   )
     return false
 
-  if (event.metaKey || event.altKey || event.ctrlKey) return false
+  if (event.metaKey || event.altKey || event.ctrlKey)
+    return false
 
-  if (!videoElements.value?.length) return false
+  if (!videoElements.value?.length)
+    return false
 
   return true
 }
@@ -198,13 +203,11 @@ function logInfo(message: any, ...optionalParams: any[]) {
         @mouseenter="selectVideo(index - 1)"
         @mouseleave="unselectVideo(index - 1)"
       >
-        <label class="flex items-center cursor-pointer py-4px"
-          ><input
-            v-model="videoSelectedIndex"
-            type="radio"
-            :value="index - 1"
-          />Video {{ index }}</label
-        >
+        <label class="flex items-center cursor-pointer py-4px"><input
+          v-model="videoSelectedIndex"
+          type="radio"
+          :value="index - 1"
+        >Video {{ index }}</label>
       </li>
     </ul>
     <button
