@@ -17,10 +17,6 @@ import { Toast } from '../Toast'
 import type { Plugin } from '../types'
 import { PausePlugin, ProgressPlugin, ScreenPlugin, SpeedPlugin, VolumePlugin } from '../plugins'
 
-const TAG = 'video-controller'
-const floatBtnDisplayed = ref(false)
-const videoElements = ref<HTMLVideoElement[]>([])
-const videoSelectedIndex = ref(0)
 const plugins: Plugin[] = [
   new PausePlugin(),
   new SpeedPlugin(),
@@ -28,12 +24,16 @@ const plugins: Plugin[] = [
   new VolumePlugin(),
   new ScreenPlugin(),
 ]
+const TAG = 'video-controller'
+let toast: Toast
+let observer: MutationObserver
 
+const floatBtnDisplayed = ref(false)
+const videoElements = ref<HTMLVideoElement[]>([])
+const videoSelectedIndex = ref(0)
 const videoListRef = ref(null)
 
-let toast: Toast
-let video: HTMLVideoElement
-let observer: MutationObserver
+const video = computed<HTMLVideoElement>(() => videoElements.value[videoSelectedIndex.value])
 
 window.addEventListener('load', () => {
   init()
@@ -51,8 +51,12 @@ function init() {
       videoSelectedIndex.value,
       videoElements.value.length - 1,
     )
-    video = videoElements.value[videoSelectedIndex.value]
+    videoSelectedIndex.value = Math.max(
+      videoSelectedIndex.value, 0,
+    )
+
     logInfo(videoElements.value)
+    logInfo(video.value, videoSelectedIndex.value)
   })
 
   listenKeyEvent('keyup')
@@ -71,7 +75,7 @@ function listenKeyEvent(type: 'keyup' | 'keydown') {
     let ret = false
     plugins.forEach((plugin) => {
       ret ||= plugin[fnMap[type]]({
-        event, video, toast,
+        event, video: video.value, toast,
       })
     })
 
