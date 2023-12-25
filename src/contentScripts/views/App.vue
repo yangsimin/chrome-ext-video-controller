@@ -47,13 +47,8 @@ function init() {
   toast = new Toast()
   listenVideoUpdate(() => {
     videoElements.value = getAllValidVideoElements()
-    videoSelectedIndex.value = Math.min(
-      videoSelectedIndex.value,
-      videoElements.value.length - 1,
-    )
-    videoSelectedIndex.value = Math.max(
-      videoSelectedIndex.value, 0,
-    )
+    if (videoSelectedIndex.value >= videoElements.value.length)
+      videoSelectedIndex.value = videoElements.value.length - 1
 
     logInfo(videoElements.value)
     logInfo(video.value, videoSelectedIndex.value)
