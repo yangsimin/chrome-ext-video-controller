@@ -15,13 +15,14 @@ import { useStyleTag } from '@vueuse/core'
 import 'uno.css'
 import { Toast } from '../toast'
 import { mapPause, mapScreen, mapSpeed, mapTime, mapVolume } from '../plugins'
+import type { Plugin } from '../types'
 
 const TAG = 'video-controller'
 const floatBtnDisplayed = ref(false)
 const videoElements = ref<HTMLVideoElement[]>([])
 const videoSelectedIndex = ref(0)
-
 const videoListRef = ref(null)
+const plugins: Plugin[]
 
 let toast: Toast | undefined
 let video: HTMLVideoElement
