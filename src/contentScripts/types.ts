@@ -1,3 +1,5 @@
+import type { Toast } from './Toast'
+
 export interface Context {
   event: KeyboardEvent
   video: HTMLVideoElement

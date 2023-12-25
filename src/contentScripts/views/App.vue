@@ -13,26 +13,39 @@
 import type { UseStyleTagReturn } from '@vueuse/core'
 import { useStyleTag } from '@vueuse/core'
 import 'uno.css'
-import { Toast } from '../toast'
-import { mapPause, mapScreen, mapSpeed, mapTime, mapVolume } from '../plugins'
+import { Toast } from '../Toast'
+import type { Plugin } from '../types'
+import { PausePlugin, ProgressPlugin, ScreenPlugin, SpeedPlugin, VolumePlugin } from '../plugins'
 
 const TAG = 'video-controller'
 const floatBtnDisplayed = ref(false)
 const videoElements = ref<HTMLVideoElement[]>([])
 const videoSelectedIndex = ref(0)
+const plugins: Plugin[] = [
+  new PausePlugin(),
+  new SpeedPlugin(),
+  new ProgressPlugin(),
+  new VolumePlugin(),
+  new ScreenPlugin(),
+]
 
 const videoListRef = ref(null)
 
-let toast: Toast | undefined
+let toast: Toast
 let video: HTMLVideoElement
+let observer: MutationObserver
 
 window.addEventListener('load', () => {
   init()
 })
 
+window.addEventListener('beforeunload', () => {
+  observer && observer.disconnect()
+})
+
 function init() {
   toast = new Toast()
-  observeVideoUpdate(() => {
+  listenVideoUpdate(() => {
     videoElements.value = getAllValidVideoElements()
     videoSelectedIndex.value = Math.min(
       videoSelectedIndex.value,
@@ -42,49 +55,41 @@ function init() {
     logInfo(videoElements.value)
   })
 
-  window.addEventListener(
-    'keyup',
-    (event) => {
-      if (!shouldMapKey(event))
-        return
-
-      // 按下空格, 特殊处理
-      const exceptKeys = [' ']
-      if (exceptKeys.includes(event.key)) {
-        event.stopImmediatePropagation()
-        event.preventDefault()
-      }
-    },
-    {
-      capture: true,
-    },
-  )
-
-  window.addEventListener(
-    'keydown',
-    async (event) => {
-      if (!shouldMapKey(event))
-        return
-
-      const features = [mapVolume, mapTime, mapSpeed, mapPause, mapScreen]
-      const ret = features.find(func => !!func(event.key, video!, toast!))
-
-      if (ret) {
-        // 避免和网站原本的快捷键功能冲突，优先使用我们自定义的
-        event.stopImmediatePropagation()
-        event.preventDefault()
-      }
-    },
-    {
-      // 在事件捕获阶段执行回调
-      // 这样可以保证回调的优先级，有利于后续阻止其他 handle 执行
-      capture: true,
-    },
-  )
+  listenKeyEvent('keyup')
+  listenKeyEvent('keydown')
 }
 
-function observeVideoUpdate(onVideoUpdate: () => void) {
-  const observer = new MutationObserver((mutations) => {
+function listenKeyEvent(type: 'keyup' | 'keydown') {
+  const fnMap: Record<typeof type, keyof Plugin> = {
+    keyup: 'onKeyUp',
+    keydown: 'onKeyDown',
+  }
+  window.addEventListener(type, (event) => {
+    if (!shouldMapKey(event))
+      return
+
+    let ret = false
+    plugins.forEach((plugin) => {
+      ret ||= plugin[fnMap[type]]({
+        event, video, toast,
+      })
+    })
+
+    if (ret) {
+      // 避免和网站原本的快捷键功能冲突，优先使用我们自定义的
+      event.stopImmediatePropagation()
+      event.preventDefault()
+    }
+  },
+  {
+    // 在事件捕获阶段执行回调
+    // 这样可以保证回调的优先级，有利于后续阻止其他 handle 执行
+    capture: true,
+  })
+}
+
+function listenVideoUpdate(onVideoUpdate: () => void) {
+  observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes?.forEach((node) => {
         if (node.nodeName !== 'VIDEO')

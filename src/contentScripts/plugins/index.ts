@@ -1,0 +1,5 @@
+export { PausePlugin } from './PausePlugin'
+export { ProgressPlugin } from './ProgressPlugin'
+export { ScreenPlugin } from './ScreenPlugin'
+export { SpeedPlugin } from './SpeedPlugin'
+export { VolumePlugin } from './VolumePlugin'
