@@ -86,12 +86,10 @@ function observeVideoUpdate(onVideoUpdate: () => void) {
     mutations.forEach(mutation => {
       mutation.addedNodes?.forEach(node => {
         if (node.nodeName !== 'VIDEO') return
-
         setTimeout(onVideoUpdate, 1000)
       })
       mutation.removedNodes?.forEach(node => {
         if (node.nodeName !== 'VIDEO') return
-
         setTimeout(onVideoUpdate)
       })
     })
