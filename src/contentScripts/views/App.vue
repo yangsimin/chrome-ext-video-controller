@@ -130,7 +130,7 @@ function shouldMapKey(event: KeyboardEvent) {
   if (event.metaKey || event.altKey || event.ctrlKey)
     return false
 
-  if (!videoElements.value?.length)
+  if (!video.value)
     return false
 
   return true
