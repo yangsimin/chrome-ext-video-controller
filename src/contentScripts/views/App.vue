@@ -47,8 +47,8 @@ function init() {
   toast = new Toast()
   listenVideoUpdate(() => {
     videoElements.value = getAllValidVideoElements()
-    if (videoSelectedIndex.value >= videoElements.value.length)
-      videoSelectedIndex.value = videoElements.value.length - 1
+    if (videoElements.value.length && !video.value)
+      videoSelectedIndex.value = 0
 
     logInfo(videoElements.value)
     logInfo(video.value, videoSelectedIndex.value)
@@ -182,8 +182,9 @@ function unselectVideo(index: number) {
 }
 
 function logInfo(message: any, ...optionalParams: any[]) {
-  // eslint-disable-next-line no-console
-  console.log(`[${TAG}]`, message, ...optionalParams)
+  if (import.meta.env.DEV)
+    // eslint-disable-next-line no-console
+    console.log(`[${TAG}]`, message, ...optionalParams)
 }
 </script>
 
