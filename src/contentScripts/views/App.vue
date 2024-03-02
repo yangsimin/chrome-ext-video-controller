@@ -10,8 +10,6 @@
  * c: 增加播放倍速
  *  (space): 暂停
  */
-import type { UseStyleTagReturn } from '@vueuse/core'
-import { useStyleTag } from '@vueuse/core'
 import 'uno.css'
 import { Toast } from '../Toast'
 import type { Plugin } from '../types'
@@ -152,49 +150,35 @@ function shouldMapKey(event: KeyboardEvent) {
   return true
 }
 
-const videoHeight = ref(0)
-const videoWidth = ref(0)
-let styleTag: UseStyleTagReturn | undefined
-const highlightClass = computed(
-  () => `
-  .video-controller-highlight::before {
-    content: "";
-    display: block;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    border: 6px solid red;
-    z-index: 10;
-    box-sizing: border-box;
-    width: ${videoWidth.value}px;
-    height: ${videoHeight.value}px;
-    margin: 0 auto;
-  }
-`,
-)
-
 function selectVideo(index: number) {
   const video = videoElements.value[index]
   logInfo('mouseEnter', videoElements.value, index, video)
-  video && video.parentElement?.classList.add('video-controller-highlight')
-  videoHeight.value = video.offsetHeight
-  videoWidth.value = video.offsetWidth
-  styleTag = useStyleTag(highlightClass, {
-    id: 'video-controller-style',
-    immediate: true,
+  if (video.parentElement?.firstElementChild?.className === 'video-controller-video-outline')
+    return
+  const div = document.createElement('div')
+  div.className = 'video-controller-video-outline'
+  Object.assign(div.style, {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    border: '6px solid red',
+    zIndex: '10',
+    boxSizing: 'border-box',
+    width: video.offsetWidth,
+    height: video.offsetHeight,
+    margin: '0 auto',
   })
+  video.parentElement?.prepend(div)
 }
 
 function unselectVideo(index: number) {
   const video = videoElements.value[index]
   logInfo('mouseLeave', videoElements.value, index, video)
-  video && video.parentElement?.classList.remove('video-controller-highlight')
-  if (styleTag) {
-    styleTag.unload()
-    styleTag = undefined
-  }
+  if (video.parentElement?.firstElementChild?.className !== 'video-controller-video-outline')
+    return
+  video.parentElement?.firstElementChild.remove()
 }
 
 function logInfo(message: any, ...optionalParams: any[]) {
