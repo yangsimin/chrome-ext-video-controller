@@ -113,10 +113,26 @@ function listenVideoUpdate(onVideoUpdate: () => void) {
   window.addEventListener('hashchange', onVideoUpdate)
 }
 
-function getAllValidVideoElements() {
-  return Array.from(document.querySelectorAll('video') ?? []).filter(
-    video => video.src,
-  )
+function getAllValidVideoElements(frame: Window = window) {
+  const elements: HTMLVideoElement[] = []
+
+  try {
+    if (frame.document) {
+      elements.push(...Array.from(frame.document.querySelectorAll('video') ?? []).filter(
+        video => video.src,
+      ))
+    }
+  }
+  catch (error) {
+    console.error(error)
+  }
+
+  if (frame.frames.length) {
+    Array.from(frame.frames).forEach((f) => {
+      elements.push(...getAllValidVideoElements(f))
+    })
+  }
+  return elements
 }
 
 function shouldMapKey(event: KeyboardEvent) {
