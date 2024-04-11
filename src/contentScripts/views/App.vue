@@ -89,12 +89,12 @@ function listenVideoUpdate(onVideoUpdate: () => void) {
   observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes?.forEach((node) => {
-        if (!mayContainsVideoElement(node as HTMLElement))
+        if (!mayContainsVideoElement(node))
           return
         setTimeout(onVideoUpdate, 1000)
       })
       mutation.removedNodes?.forEach((node) => {
-        if (!mayContainsVideoElement(node as HTMLElement))
+        if (!mayContainsVideoElement(node))
           return
         setTimeout(onVideoUpdate)
       })
@@ -111,12 +111,15 @@ function listenVideoUpdate(onVideoUpdate: () => void) {
   window.addEventListener('hashchange', onVideoUpdate)
 }
 
-function mayContainsVideoElement(node: HTMLElement) {
+function mayContainsVideoElement(node: Node) {
+  if (node.nodeType !== Node.ELEMENT_NODE)
+    return false
+
   if (node.nodeName === 'VIDEO')
     return true
-  if (node.className?.toLowerCase().includes('video'))
+  if ((node as HTMLElement).className?.toLowerCase().includes('video'))
     return true
-  if (node.querySelector('iframe'))
+  if ((node as HTMLElement).querySelector('iframe'))
     return true
 
   return false
@@ -133,7 +136,8 @@ function getAllValidVideoElements(frame: Window = window) {
     }
   }
   catch (error) {
-    console.error(error)
+    // eslint-disable-next-line no-console
+    console.info('Read frame error.', error)
   }
 
   if (frame.frames.length) {
