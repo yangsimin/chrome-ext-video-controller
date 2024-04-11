@@ -89,12 +89,12 @@ function listenVideoUpdate(onVideoUpdate: () => void) {
   observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       mutation.addedNodes?.forEach((node) => {
-        if (node.nodeName !== 'VIDEO')
+        if (!mayContainsVideoElement(node as HTMLElement))
           return
         setTimeout(onVideoUpdate, 1000)
       })
       mutation.removedNodes?.forEach((node) => {
-        if (node.nodeName !== 'VIDEO')
+        if (!mayContainsVideoElement(node as HTMLElement))
           return
         setTimeout(onVideoUpdate)
       })
@@ -109,6 +109,17 @@ function listenVideoUpdate(onVideoUpdate: () => void) {
   setTimeout(onVideoUpdate)
 
   window.addEventListener('hashchange', onVideoUpdate)
+}
+
+function mayContainsVideoElement(node: HTMLElement) {
+  if (node.nodeName === 'VIDEO')
+    return true
+  if (node.className?.toLowerCase().includes('video'))
+    return true
+  if (node.querySelector('iframe'))
+    return true
+
+  return false
 }
 
 function getAllValidVideoElements(frame: Window = window) {
