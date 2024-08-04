@@ -117,7 +117,7 @@ function mayContainsVideoElement(node: Node) {
 
   if (node.nodeName === 'VIDEO')
     return true
-  if ((node as HTMLElement).className?.toLowerCase().includes('video'))
+  if (/video/i.test((node as HTMLElement).className))
     return true
   if ((node as HTMLElement).querySelector('iframe'))
     return true
